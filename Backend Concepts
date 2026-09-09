@@ -1,0 +1,2492 @@
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ **backend interview roadmap**.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+  
+
+>   
+> 
+> **What is it? → Why do we need it? → How does it work? → Trade-offs → Real-world example**
+> 
+>   
+
+  
+
+Below is an **interview-ready cheat sheet** for the entire list. Since you're working with **Node.js + MongoDB**, I'll also connect the concepts to that stack where useful.
+
+  
+
+* * *
+
+  
+
+1\. REST APIs & HTTP
+====================
+
+  
+
+### What is REST?
+
+  
+
+REST is an architectural style for building APIs around **resources**.
+
+  
+
+Example:
+
+  
+
+http
+
+    GET    /users/123POST   /usersPUT    /users/123DELETE /users/123
+
+  
+
+### Important HTTP methods
+
+  
+
+Method
+
+Purpose
+
+GET
+
+Read
+
+POST
+
+Create
+
+PUT
+
+Replace/update
+
+PATCH
+
+Partial update
+
+DELETE
+
+Delete
+
+  
+
+### Important status codes
+
+  
+
+    200 OK201 Created204 No Content400 Bad Request401 Unauthorized403 Forbidden404 Not Found409 Conflict429 Too Many Requests500 Internal Server Error502 Bad Gateway503 Service Unavailable
+
+  
+
+### Interview question
+
+  
+
+**PUT vs PATCH?**
+
+  
+
+PUT generally replaces the resource, while PATCH modifies specific fields.
+
+  
+
+* * *
+
+  
+
+2\. Authentication vs Authorization
+===================================
+
+  
+
+This is one of the most common interview questions.
+
+  
+
+### Authentication
+
+  
+
+>   
+> 
+> **Who are you?**
+> 
+>   
+
+  
+
+Example:
+
+  
+
+    Login → email/password → verify → create session/JWT
+
+  
+
+### Authorization
+
+  
+
+>   
+> 
+> **What are you allowed to do?**
+> 
+>   
+
+  
+
+Example:
+
+  
+
+    User → can edit own postAdmin → can delete any post
+
+  
+
+Think:
+
+  
+
+    Authentication = IdentityAuthorization  = Permission
+
+  
+
+* * *
+
+  
+
+3\. JWT, OAuth & API Gateway
+============================
+
+  
+
+JWT
+---
+
+  
+
+JWT is commonly used for stateless authentication.
+
+  
+
+Example:
+
+  
+
+    Client   ↓POST /login   ↓Server verifies credentials   ↓JWT   ↓Client sends:Authorization: Bearer <token>
+
+  
+
+JWT contains things such as:
+
+  
+
+JSON
+
+    {  "sub": "123",  "role": "user",  "exp": 123456789}
+
+  
+
+### JWT advantage
+
+  
+
+Server doesn't necessarily need to maintain session state.
+
+  
+
+### JWT problem
+
+  
+
+**How do you revoke a token?**
+
+  
+
+Because the token may remain valid until expiration.
+
+  
+
+Solutions include:
+
+  
+
+  
+*     
+    
+    short-lived access tokens
+    
+      
+    
+  
+*     
+    
+    refresh tokens
+    
+      
+    
+  
+*     
+    
+    token blacklist
+    
+      
+    
+  
+*     
+    
+    token versioning
+    
+      
+    
+  
+
+  
+
+* * *
+
+  
+
+OAuth
+-----
+
+  
+
+OAuth is primarily about **delegated authorization**.
+
+  
+
+Example:
+
+  
+
+>   
+> 
+> Login with Google
+> 
+>   
+
+  
+
+Your application doesn't need the user's Google password.
+
+  
+
+* * *
+
+  
+
+API Gateway
+-----------
+
+  
+
+Instead of:
+
+  
+
+    Client → User ServiceClient → Post ServiceClient → Payment Service
+
+  
+
+you can have:
+
+  
+
+                     ┌→ User ServiceClient → Gateway ├→ Post Service                 └→ Payment Service
+
+  
+
+Gateway can handle:
+
+  
+
+  
+*     
+    
+    authentication
+    
+      
+    
+  
+*     
+    
+    rate limiting
+    
+      
+    
+  
+*     
+    
+    routing
+    
+      
+    
+  
+*     
+    
+    logging
+    
+      
+    
+  
+*     
+    
+    request transformation
+    
+      
+    
+  
+
+  
+
+* * *
+
+  
+
+4\. Rate Limiting & CORS
+========================
+
+  
+
+Rate limiting
+-------------
+
+  
+
+Limits how many requests a client can make.
+
+  
+
+Example:
+
+  
+
+    100 requests / minute / user
+
+  
+
+Why?
+
+  
+
+  
+*     
+    
+    Prevent abuse
+    
+      
+    
+  
+*     
+    
+    Protect database
+    
+      
+    
+  
+*     
+    
+    Prevent DDoS-like application exhaustion
+    
+      
+    
+  
+*     
+    
+    Fair resource usage
+    
+      
+    
+  
+
+  
+
+Common algorithms:
+
+  
+
+    Fixed WindowSliding WindowToken BucketLeaky Bucket
+
+  
+
+### Redis example
+
+  
+
+    rate_limit:user:123
+
+  
+
+Redis is excellent for distributed rate limiting because multiple Node.js instances can share the same counter.
+
+  
+
+* * *
+
+  
+
+CORS
+----
+
+  
+
+CORS = Cross-Origin Resource Sharing.
+
+  
+
+Suppose:
+
+  
+
+    Frontend:https://myapp.comAPI:https://api.myapp.com
+
+  
+
+The browser may block requests unless the API permits the origin.
+
+  
+
+Example:
+
+  
+
+http
+
+    Access-Control-Allow-Origin: https://myapp.com
+
+  
+
+Important interview point:
+
+  
+
+>   
+> 
+> **CORS is primarily a browser security mechanism. It is not an authentication mechanism.**
+> 
+>   
+
+  
+
+* * *
+
+  
+
+5\. Caching & Cache-Aside
+=========================
+
+  
+
+Caching stores frequently accessed data in a faster storage layer.
+
+  
+
+    Client  ↓Node.js  ↓Redis  ↓ cache missMongoDB
+
+  
+
+### Cache-aside
+
+  
+
+Most common strategy:
+
+  
+
+JavaScript
+
+    const cached = await redis.get(key);if (cached) {    return JSON.parse(cached);}const data = await db.find(...);await redis.set(key, JSON.stringify(data), {    EX: 300});return data;
+
+  
+
+Flow:
+
+  
+
+    Read cache   ↓Hit → return   ↓Miss   ↓Database   ↓Store in cache   ↓Return
+
+  
+
+### Problem
+
+  
+
+**Cache invalidation.**
+
+  
+
+When database changes:
+
+  
+
+    UPDATE MongoDBDELETE Redis cache
+
+  
+
+* * *
+
+  
+
+6\. Redis & Cache Eviction
+==========================
+
+  
+
+Redis is an in-memory data store commonly used for:
+
+  
+
+  
+*     
+    
+    caching
+    
+      
+    
+  
+*     
+    
+    sessions
+    
+      
+    
+  
+*     
+    
+    rate limiting
+    
+      
+    
+  
+*     
+    
+    distributed locks
+    
+      
+    
+  
+*     
+    
+    counters
+    
+      
+    
+  
+*     
+    
+    queues
+    
+      
+    
+  
+*     
+    
+    pub/sub
+    
+      
+    
+  
+
+  
+
+### Cache eviction
+
+  
+
+What happens when Redis memory is full?
+
+  
+
+Policies include:
+
+  
+
+    LRULFUTTL-based expiration
+
+  
+
+### LRU
+
+  
+
+Least Recently Used.
+
+  
+
+Remove data that hasn't been accessed recently.
+
+  
+
+### LFU
+
+  
+
+Least Frequently Used.
+
+  
+
+Remove data that is accessed least often.
+
+  
+
+* * *
+
+  
+
+7\. Database Indexing & Transactions
+====================================
+
+  
+
+Index
+-----
+
+  
+
+An index makes searching faster.
+
+  
+
+Without index:
+
+  
+
+    MongoDB scans documents
+
+  
+
+With index:
+
+  
+
+    Index → matching document
+
+  
+
+Example:
+
+  
+
+JavaScript
+
+    db.users.createIndex({ email: 1 })
+
+  
+
+Then:
+
+  
+
+JavaScript
+
+    db.users.findOne({ email: "abc@gmail.com" })
+
+  
+
+can use the index.
+
+  
+
+### Trade-off
+
+  
+
+Indexes improve reads but:
+
+  
+
+  
+*     
+    
+    consume memory/disk
+    
+      
+    
+  
+*     
+    
+    slow writes
+    
+      
+    
+  
+*     
+    
+    require maintenance
+    
+      
+    
+  
+
+  
+
+**Interview question:**
+
+  
+
+>   
+> 
+> Should we index every field?
+> 
+>   
+
+  
+
+**No.**
+
+  
+
+Indexes have a cost, and unnecessary indexes can hurt write performance.
+
+  
+
+* * *
+
+  
+
+Transactions
+------------
+
+  
+
+A transaction makes multiple operations behave as one logical operation.
+
+  
+
+Example:
+
+  
+
+    Transfer ₹100Account A - ₹100Account B + ₹100
+
+  
+
+We don't want:
+
+  
+
+    A = -100B = unchanged
+
+  
+
+Transaction gives atomicity.
+
+  
+
+MongoDB supports multi-document transactions.
+
+  
+
+* * *
+
+  
+
+8\. SQL vs NoSQL
+================
+
+  
+
+### SQL
+
+  
+
+Examples:
+
+  
+
+  
+*     
+    
+    PostgreSQL
+    
+      
+    
+  
+*     
+    
+    MySQL
+    
+      
+    
+  
+
+  
+
+Strong relational model:
+
+  
+
+    UsersOrdersProducts
+
+  
+
+with relationships.
+
+  
+
+### NoSQL
+
+  
+
+Examples:
+
+  
+
+  
+*     
+    
+    MongoDB
+    
+      
+    
+  
+*     
+    
+    DynamoDB
+    
+      
+    
+  
+*     
+    
+    Cassandra
+    
+      
+    
+  
+
+  
+
+Often designed for:
+
+  
+
+  
+*     
+    
+    flexible schemas
+    
+      
+    
+  
+*     
+    
+    horizontal scaling
+    
+      
+    
+  
+*     
+    
+    high throughput
+    
+      
+    
+  
+
+  
+
+### Don't say:
+
+  
+
+>   
+> 
+> "NoSQL is faster than SQL."
+> 
+>   
+
+  
+
+That's too simplistic.
+
+  
+
+Better answer:
+
+  
+
+>   
+> 
+> The choice depends on access patterns, consistency requirements, relationships, scalability requirements and workload.
+> 
+>   
+
+  
+
+* * *
+
+  
+
+9\. ACID & Normalization
+========================
+
+  
+
+ACID
+----
+
+  
+
+### Atomicity
+
+  
+
+All operations happen or none happen.
+
+  
+
+### Consistency
+
+  
+
+Database remains valid according to its rules.
+
+  
+
+### Isolation
+
+  
+
+Concurrent transactions don't improperly interfere.
+
+  
+
+### Durability
+
+  
+
+Committed data survives failures.
+
+  
+
+* * *
+
+  
+
+Normalization
+-------------
+
+  
+
+Primarily used in relational databases to reduce data duplication.
+
+  
+
+Instead of:
+
+  
+
+    OrderuserNameuserEmailproductName
+
+  
+
+you might have:
+
+  
+
+    UsersOrdersProducts
+
+  
+
+and relationships between them.
+
+  
+
+### MongoDB
+
+  
+
+MongoDB often uses **denormalization**.
+
+  
+
+Example:
+
+  
+
+JSON
+
+    {  "_id": "post1",  "author": {    "_id": "user1",    "name": "John"  }}
+
+  
+
+rather than constantly joining data.
+
+  
+
+* * *
+
+  
+
+10\. Sharding & Replication
+===========================
+
+  
+
+These are frequently confused.
+
+  
+
+Replication
+-----------
+
+  
+
+Creates copies of data.
+
+  
+
+                 Primary            /       \       Secondary  Secondary
+
+  
+
+Purpose:
+
+  
+
+  
+*     
+    
+    high availability
+    
+      
+    
+  
+*     
+    
+    failover
+    
+      
+    
+  
+*     
+    
+    read scaling in some systems
+    
+      
+    
+  
+
+  
+
+* * *
+
+  
+
+Sharding
+--------
+
+  
+
+Splits data across machines.
+
+  
+
+    Shard 1 → users A-FShard 2 → users G-MShard 3 → users N-Z
+
+  
+
+Purpose:
+
+  
+
+>   
+> 
+> **Horizontal scalability.**
+> 
+>   
+
+  
+
+MongoDB supports both replication and sharding.
+
+  
+
+* * *
+
+  
+
+11\. CAP Theorem & Consistency Models
+=====================================
+
+  
+
+CAP says that during a **network partition**, a distributed system must choose between:
+
+  
+
+    ConsistencyAvailability
+
+  
+
+while partition tolerance is required for distributed systems.
+
+  
+
+### C
+
+  
+
+Every read gets the latest write.
+
+  
+
+### A
+
+  
+
+Every request receives a response.
+
+  
+
+### P
+
+  
+
+System continues operating despite network partition.
+
+  
+
+### Important interview clarification
+
+  
+
+Don't say:
+
+  
+
+>   
+> 
+> "You can choose any two of CAP."
+> 
+>   
+
+  
+
+Better:
+
+  
+
+>   
+> 
+> When a network partition occurs, a distributed system must trade off consistency versus availability.
+> 
+>   
+
+  
+
+* * *
+
+  
+
+12\. Load Balancing & Scaling
+=============================
+
+  
+
+Suppose you have:
+
+  
+
+    10,000 requests/sec
+
+  
+
+One server may not be enough.
+
+  
+
+Use:
+
+  
+
+                     Load Balancer                /      |      \              Node     Node    Node
+
+  
+
+Load balancer distributes traffic.
+
+  
+
+Algorithms:
+
+  
+
+    Round RobinLeast ConnectionsWeightedIP Hash
+
+  
+
+* * *
+
+  
+
+Vertical scaling
+----------------
+
+  
+
+    8 CPU → 32 CPU
+
+  
+
+Horizontal scaling
+------------------
+
+  
+
+    1 server → 10 servers
+
+  
+
+Horizontal scaling is generally preferred for highly scalable distributed systems.
+
+  
+
+* * *
+
+  
+
+13\. Microservices & Service Discovery
+======================================
+
+  
+
+Instead of one huge application:
+
+  
+
+    Monolith ├── Users ├── Posts ├── Payments └── Notifications
+
+  
+
+you might have:
+
+  
+
+    User ServicePost ServicePayment ServiceNotification Service
+
+  
+
+### Advantages
+
+  
+
+  
+*     
+    
+    independent deployment
+    
+      
+    
+  
+*     
+    
+    independent scaling
+    
+      
+    
+  
+*     
+    
+    team ownership
+    
+      
+    
+  
+*     
+    
+    fault isolation
+    
+      
+    
+  
+
+  
+
+### Disadvantages
+
+  
+
+  
+*     
+    
+    network failures
+    
+      
+    
+  
+*     
+    
+    distributed transactions
+    
+      
+    
+  
+*     
+    
+    operational complexity
+    
+      
+    
+  
+*     
+    
+    monitoring complexity
+    
+      
+    
+  
+*     
+    
+    service discovery
+    
+      
+    
+  
+
+  
+
+* * *
+
+  
+
+Service Discovery
+-----------------
+
+  
+
+How does:
+
+  
+
+    Post Service
+
+  
+
+find:
+
+  
+
+    User Service
+
+  
+
+?
+
+  
+
+Through service discovery.
+
+  
+
+Examples:
+
+  
+
+  
+*     
+    
+    Kubernetes DNS
+    
+      
+    
+  
+*     
+    
+    Consul
+    
+      
+    
+  
+*     
+    
+    service registry
+    
+      
+    
+  
+
+  
+
+* * *
+
+  
+
+14\. Circuit Breaker & Fault Tolerance
+======================================
+
+  
+
+Suppose:
+
+  
+
+    Order Service → Payment Service
+
+  
+
+Payment service is down.
+
+  
+
+Without protection:
+
+  
+
+    Order ↓Payment timeout ↓Payment timeout ↓Payment timeout ↓Everything becomes slow
+
+  
+
+Circuit breaker prevents this.
+
+  
+
+States:
+
+  
+
+    CLOSED   ↓ failuresOPEN   ↓ after timeoutHALF OPEN   ↓ successCLOSED
+
+  
+
+### Real-world example
+
+  
+
+If payment service is unavailable:
+
+  
+
+    "Payment service temporarily unavailable"
+
+  
+
+rather than allowing thousands of requests to pile up.
+
+  
+
+* * *
+
+  
+
+15\. Retry & Exponential Backoff
+================================
+
+  
+
+Suppose an external service temporarily fails.
+
+  
+
+Instead of:
+
+  
+
+    retry immediatelyretry immediatelyretry immediately
+
+  
+
+use:
+
+  
+
+    1 sec2 sec4 sec8 sec
+
+  
+
+This is exponential backoff.
+
+  
+
+Often add **jitter**:
+
+  
+
+    delay = exponential_delay + random_jitter
+
+  
+
+Why?
+
+  
+
+Because if 10,000 clients retry simultaneously, you can create a **thundering herd**.
+
+  
+
+### Important
+
+  
+
+Don't blindly retry every error.
+
+  
+
+For example:
+
+  
+
+    400 Bad Request
+
+  
+
+usually shouldn't be retried.
+
+  
+
+* * *
+
+  
+
+16\. Kafka & Message Queues
+===========================
+
+  
+
+Queue
+-----
+
+  
+
+Example:
+
+  
+
+    API ↓Queue ↓Worker
+
+  
+
+Useful when processing doesn't need to happen synchronously.
+
+  
+
+Example:
+
+  
+
+    POST /videoUpload video   ↓Return response   ↓Queue   ↓Video processing worker
+
+  
+
+* * *
+
+  
+
+Kafka
+-----
+
+  
+
+Kafka is a distributed event streaming platform.
+
+  
+
+Conceptually:
+
+  
+
+    Producer   ↓Kafka Topic   ↓Consumer
+
+  
+
+Kafka is particularly useful for:
+
+  
+
+  
+*     
+    
+    event streaming
+    
+      
+    
+  
+*     
+    
+    high throughput
+    
+      
+    
+  
+*     
+    
+    event-driven architectures
+    
+      
+    
+  
+*     
+    
+    analytics pipelines
+    
+      
+    
+  
+
+  
+
+* * *
+
+  
+
+17\. Producer / Consumer & Pub-Sub
+==================================
+
+  
+
+Producer / Consumer
+-------------------
+
+  
+
+    Producer → Queue → Consumer
+
+  
+
+Example:
+
+  
+
+    Order Created     ↓Queue     ↓Email Worker
+
+  
+
+* * *
+
+  
+
+Pub/Sub
+-------
+
+  
+
+One event can be delivered to multiple subscribers.
+
+  
+
+                  → NotificationEvent → Pub/Sub → Analytics              → Recommendation
+
+  
+
+For example:
+
+  
+
+    POST_CREATED
+
+  
+
+could trigger:
+
+  
+
+    Notification ServiceAnalytics ServiceRecommendation Service
+
+  
+
+* * *
+
+  
+
+18\. Connection Pooling
+=======================
+
+  
+
+Opening a database connection for every request is expensive.
+
+  
+
+Bad:
+
+  
+
+    Request ↓Create DB connection ↓Query ↓Close connection
+
+  
+
+Instead:
+
+  
+
+                 Connection Pool           /   /   |   \   \Request → connectionRequest → connectionRequest → connection
+
+  
+
+Node.js MongoDB drivers maintain connection pools.
+
+  
+
+### Interview question
+
+  
+
+**Why connection pooling?**
+
+  
+
+Because creating connections has overhead, and pooling allows connections to be reused efficiently.
+
+  
+
+* * *
+
+  
+
+19\. Observability & Monitoring
+===============================
+
+  
+
+Three pillars:
+
+  
+
+    LogsMetricsTraces
+
+  
+
+### Logs
+
+  
+
+"What happened?"
+
+  
+
+    Payment failed for order 123
+
+  
+
+### Metrics
+
+  
+
+"What is happening quantitatively?"
+
+  
+
+    CPU = 70%RPS = 20,000Error rate = 2%Latency p99 = 500ms
+
+  
+
+### Traces
+
+  
+
+"Where did the request spend its time?"
+
+  
+
+    API ↓ 20msUser Service ↓ 30msPost Service ↓ 400msMongoDB
+
+  
+
+### Important metrics
+
+  
+
+Know these for interviews:
+
+  
+
+    RPSLatencyError rateCPUMemoryDB connectionsCache hit ratiop95/p99 latency
+
+  
+
+* * *
+
+  
+
+20\. Docker, Kubernetes & CI/CD
+===============================
+
+  
+
+Docker
+------
+
+  
+
+Packages your application and dependencies into a container.
+
+  
+
+Example:
+
+  
+
+    Node.js app+dependencies+runtime=Docker image
+
+  
+
+* * *
+
+  
+
+Kubernetes
+----------
+
+  
+
+Kubernetes manages containers at scale.
+
+  
+
+It handles things like:
+
+  
+
+  
+*     
+    
+    deployment
+    
+      
+    
+  
+*     
+    
+    scaling
+    
+      
+    
+  
+*     
+    
+    service discovery
+    
+      
+    
+  
+*     
+    
+    health checks
+    
+      
+    
+  
+*     
+    
+    rolling updates
+    
+      
+    
+  
+
+  
+
+Example:
+
+  
+
+    Deployment   ↓PodPodPod
+
+  
+
+* * *
+
+  
+
+CI/CD
+-----
+
+  
+
+CI:
+
+  
+
+>   
+> 
+> Automatically build/test code when developers push changes.
+> 
+>   
+
+  
+
+CD:
+
+  
+
+>   
+> 
+> Automatically deliver/deploy tested code.
+> 
+>   
+
+  
+
+Typical pipeline:
+
+  
+
+    Git Push   ↓Build   ↓Unit Tests   ↓Docker Build   ↓Security Scan   ↓Deploy   ↓Health Check
+
+  
+
+* * *
+
+  
+
+21\. System Design & Best Practices
+===================================
+
+  
+
+This is where all the previous concepts come together.
+
+  
+
+For example, imagine:
+
+  
+
+>   
+> 
+> **Design Instagram/Reels for 1 million concurrent users.**
+> 
+>   
+
+  
+
+You might design:
+
+  
+
+                       Load Balancer                        |                 API Gateway                        |        ┌───────────────┼───────────────┐        ↓               ↓               ↓    User Service    Post Service    Feed Service        |               |               |      MongoDB         MongoDB          Redis        |               |        └─────── Kafka ─┘                  |        ┌─────────┼─────────┐        ↓         ↓         ↓   Notification Analytics Recommendation
+
+  
+
+For media:
+
+  
+
+    Client  ↓Object Storage  ↓CDN  ↓Users
+
+  
+
+You don't want your Node.js server serving every video byte.
+
+  
+
+* * *
+
+  
+
+22\. The Most Important Interview Skill
+=======================================
+
+  
+
+For every technology, don't just answer:
+
+  
+
+>   
+> 
+> "Redis is an in-memory database."
+> 
+>   
+
+  
+
+Instead answer:
+
+  
+
+### Example: "Why use Redis?"
+
+  
+
+**What?**
+
+  
+
+Redis is an in-memory key-value store.
+
+  
+
+**Why?**
+
+  
+
+To reduce latency and database load.
+
+  
+
+**How?**
+
+  
+
+    Request ↓Redis GET ↓Cache Hit → response ↓Cache Miss ↓MongoDB ↓Redis SET
+
+  
+
+**Trade-off?**
+
+  
+
+Redis costs memory and introduces cache invalidation/staleness problems.
+
+  
+
+**Real-world example?**
+
+  
+
+For a social-media application, cache:
+
+  
+
+    post:123user:456feed:456
+
+  
+
+while keeping the source of truth in MongoDB.
+
+  
+
+That's the kind of answer interviewers generally want.
+
+  
+
+* * *
+
+  
+
+⭐ Questions I would prioritize for your backend interview
+=========================================================
+
+  
+
+If you have limited preparation time, learn these **in this order**:
+
+  
+
+### Tier 1 — Must know
+
+  
+
+  
+2.    
+    
+    REST & HTTP
+    
+      
+    
+  
+4.    
+    
+    Authentication vs Authorization
+    
+      
+    
+  
+6.    
+    
+    JWT
+    
+      
+    
+  
+8.    
+    
+    Redis & caching
+    
+      
+    
+  
+10.    
+    
+    Database indexes
+    
+      
+    
+  
+12.    
+    
+    SQL vs NoSQL
+    
+      
+    
+  
+14.    
+    
+    Transactions / ACID
+    
+      
+    
+  
+16.    
+    
+    Replication
+    
+      
+    
+  
+18.    
+    
+    Sharding
+    
+      
+    
+  
+20.    
+    
+    Load balancing
+    
+      
+    
+  
+22.    
+    
+    Horizontal vs vertical scaling
+    
+      
+    
+  
+24.    
+    
+    Kafka / queues
+    
+      
+    
+  
+26.    
+    
+    Retry + exponential backoff
+    
+      
+    
+  
+28.    
+    
+    Circuit breaker
+    
+      
+    
+  
+30.    
+    
+    Docker
+    
+      
+    
+  
+32.    
+    
+    Observability
+    
+      
+    
+  
+
+  
+
+### Tier 2 — Very likely in system design
+
+  
+
+  
+18.    
+    
+    CAP theorem
+    
+      
+    
+  
+20.    
+    
+    Consistency models
+    
+      
+    
+  
+22.    
+    
+    API Gateway
+    
+      
+    
+  
+24.    
+    
+    Rate limiting
+    
+      
+    
+  
+26.    
+    
+    Connection pooling
+    
+      
+    
+  
+28.    
+    
+    Microservices
+    
+      
+    
+  
+30.    
+    
+    Service discovery
+    
+      
+    
+  
+32.    
+    
+    Pub/Sub
+    
+      
+    
+  
+34.    
+    
+    CDN
+    
+      
+    
+  
+36.    
+    
+    Database partitioning
+    
+      
+    
+  
+
+  
+
+### Tier 3 — Deeper questions
+
+  
+
+  
+28.    
+    
+    Cache eviction
+    
+      
+    
+  
+30.    
+    
+    Cache invalidation
+    
+      
+    
+  
+32.    
+    
+    Idempotency
+    
+      
+    
+  
+34.    
+    
+    Distributed locks
+    
+      
+    
+  
+36.    
+    
+    Eventual consistency
+    
+      
+    
+  
+38.    
+    
+    Dead-letter queues
+    
+      
+    
+  
+40.    
+    
+    Kafka partitions
+    
+      
+    
+  
+42.    
+    
+    Kafka consumer groups
+    
+      
+    
+  
+44.    
+    
+    Message ordering
+    
+      
+    
+  
+46.    
+    
+    Exactly-once vs at-least-once delivery
+    
+      
+    
+  
+
+  
+
+* * *
+
+  
+
+For your Node.js + MongoDB interviews
+-------------------------------------
+
+  
+
+I'd especially make sure you can answer these **scenario questions**:
+
+  
+
+>   
+> 
+> **1\. Your API suddenly receives 100,000 requests/sec. What do you do?**
+> 
+>   
+
+  
+
+>   
+> 
+> **2\. MongoDB is becoming slow. How do you debug it?**
+> 
+>   
+
+  
+
+>   
+> 
+> **3\. How would you design a feed for 1 million users?**
+> 
+>   
+
+  
+
+>   
+> 
+> **4\. How would you implement Redis caching in Node.js?**
+> 
+>   
+
+  
+
+>   
+> 
+> **5\. What happens if Redis goes down?**
+> 
+>   
+
+  
+
+>   
+> 
+> **6\. What happens if MongoDB goes down?**
+> 
+>   
+
+  
+
+>   
+> 
+> **7\. How would you implement rate limiting across multiple Node.js servers?**
+> 
+>   
+
+  
+
+>   
+> 
+> **8\. How would you prevent duplicate payment/order requests?**
+> 
+>   
+
+  
+
+>   
+> 
+> **9\. How would you design notifications using Kafka?**
+> 
+>   
+
+  
+
+>   
+> 
+> **10\. How would you design Instagram/Reels for 1 million concurrent users?**
+> 
+>   
+
+  
+
+>   
+> 
+> **11\. How do you scale a Node.js application horizontally?**
+> 
+>   
+
+  
+
+>   
+> 
+> **12\. How would you handle a slow downstream service?**
+> 
+>   
+
+  
+
+>   
+> 
+> **13\. How do you prevent cache stampede/thundering herd?**
+> 
+>   
+
+  
+
+>   
+> 
+> **14\. How do MongoDB indexes work and when can an index hurt performance?**
+> 
+>   
+
+  
+
+>   
+> 
+> **15\. When would you choose MongoDB over PostgreSQL?**
+> 
+>   
+
+  
+
+These are much more valuable than simply memorizing 50 definitions.
+
+  
+
+If you're preparing specifically for a **Node.js backend interview**, I can take these topics **one by one and teach each with diagrams, Node.js/MongoDB code, common interviewer follow-ups, and strong 1–2 minute interview answers**.
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+From ChatGPT, designed with FancyGPT
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
